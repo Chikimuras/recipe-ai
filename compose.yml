@@ -1,0 +1,49 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: recipe-api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://recipe_user:recipe_pass@db:5432/recipe_db
+      CHROMADB_HOST: chromadb
+      CHROMADB_PORT: 8000
+      CHROMADB_COLLECTION: recipes
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+    depends_on:
+      - db
+      - chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+
+  db:
+    image: postgres:16-alpine
+    container_name: recipe-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: recipe_db
+      POSTGRES_USER: recipe_user
+      POSTGRES_PASSWORD: recipe_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: chromadb
+    restart: unless-stopped
+    environment:
+      IS_PERSISTENT: "TRUE"
+    ports:
+      - "8001:8000"
+    volumes:
+      - chromadb_data:/chroma/.chroma
+
+volumes:
+  pgdata:
+  chromadb_data:
